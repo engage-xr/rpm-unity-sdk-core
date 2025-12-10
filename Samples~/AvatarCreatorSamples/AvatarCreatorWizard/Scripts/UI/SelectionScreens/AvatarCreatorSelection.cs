@@ -1,11 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
+﻿using ReadyPlayerMe.AvatarCreator;
+using ReadyPlayerMe.Core;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ReadyPlayerMe.AvatarCreator;
-using ReadyPlayerMe.Core;
 using UnityEngine;
 using UnityEngine.UI;
 using TaskExtensions = ReadyPlayerMe.AvatarCreator.TaskExtensions;
@@ -24,9 +23,11 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
         [SerializeField] private AvatarConfig inCreatorConfig;
         [SerializeField] private RuntimeAnimatorController animator;
         [SerializeField] private SignupElement signupElement;
+        [SerializeField] private BodyShapeButtonGroup bodyShapeToggleGroup;
+        [SerializeField] private GenderButtonGroup genderToggleGroup;
+
         private PartnerAssetsManager partnerAssetManager;
         private AvatarManager avatarManager;
-
         private GameObject currentAvatar;
         private Quaternion lastRotation;
 
@@ -47,6 +48,8 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             signupElement.OnContinueWithoutSignup.AddListener(Save);
             signupElement.OnSendEmail.AddListener(OnSendEmail);
             categoryUICreator.OnCategorySelected += OnCategorySelected;
+            bodyShapeToggleGroup.OnValueChanged += OnBodyShapeChanged;
+            genderToggleGroup.OnValueChanged += OnGenderChanged;
             Setup();
         }
 
@@ -56,6 +59,8 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             signupElement.OnContinueWithoutSignup.RemoveListener(Save);
             signupElement.OnSendEmail.RemoveListener(OnSendEmail);
             categoryUICreator.OnCategorySelected -= OnCategorySelected;
+            bodyShapeToggleGroup.OnValueChanged -= OnBodyShapeChanged;
+            genderToggleGroup.OnValueChanged -= OnGenderChanged;
             Cleanup();
         }
 
@@ -227,11 +232,24 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
                 });
         }
 
+        private BodyShape GetBodyShape()
+        {
+            if (AvatarCreatorData.AvatarProperties.Assets == null ||
+                !AvatarCreatorData.AvatarProperties.Assets.TryGetValue(AssetType.BodyShape, out var bodyShapeId))
+            {
+                return BodyShape.Average;
+            }
+
+            return Enum.TryParse(bodyShapeId.ToString(), out BodyShape bodyShape) ? bodyShape : BodyShape.Average;
+        }
+
         private void CreateUI()
         {
             categoryUICreator.Setup();
             assetButtonCreator.SetSelectedAssets(AvatarCreatorData.AvatarProperties.Assets);
             assetButtonCreator.CreateClearButton(UpdateAvatar);
+            genderToggleGroup.SelectOption(AvatarCreatorData.AvatarProperties.Gender);
+            bodyShapeToggleGroup.SelectOption(GetBodyShape());
             saveButton.gameObject.SetActive(true);
         }
 
@@ -256,6 +274,33 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             {
                 await CreateAssetsByCategory(AssetType.EyeColor);
             }
+        }
+
+        private void OnBodyShapeChanged(BodyShape bodyShape)
+        {
+            UpdateAvatar(bodyShape.GetDescription(), AssetType.BodyShape);
+        }
+
+        private async void OnGenderChanged(OutfitGender gender)
+        {
+            AvatarCreatorData.AvatarProperties.Gender = gender;
+            AvatarCreatorData.AvatarProperties.isDraft = true;
+
+            var payload = new AvatarProperties
+            {
+                Gender = gender,
+            };
+            var avatar = await avatarManager.UpdateGender(gender);
+
+            AuthManager.StoreLastModifiedAvatar(AvatarCreatorData.AvatarProperties.Id);
+            ProcessAvatar(avatar);
+            Destroy(currentAvatar);
+            currentAvatar = avatar;
+
+            await partnerAssetManager.GetAssets(AvatarCreatorData.AvatarProperties.Gender, ctxSource.Token);
+            assetButtonCreator.SetSelectedAssets(AvatarCreatorData.AvatarProperties.Assets);
+
+            LoadingManager.DisableLoading();
         }
 
         private void OnAssetButtonClicked(string id, AssetType category)

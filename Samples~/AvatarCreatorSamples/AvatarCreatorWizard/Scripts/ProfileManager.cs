@@ -1,9 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ReadyPlayerMe.AvatarCreator;
 using ReadyPlayerMe.Core;
+using System.IO;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
@@ -34,21 +35,22 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
 
         private void OnDisable()
         {
-            if (AuthManager.IsSignedIn)
-            {
-                SaveSession(AuthManager.UserSession);
-            }
+            SaveSession(AuthManager.UserSession);
             profileUI.SignedOut -= AuthManager.Logout;
             AuthManager.OnSignedOut -= DeleteSession;
         }
 
-        public bool LoadSession()
+        public async Task LoadSession(CancellationToken cancellationToken)
         {
             if (!File.Exists(filePath))
             {
-                SDKLogger.Log(TAG, $"Session file not found in {filePath}");
-                return false;
+                await AuthManager.LoginAsAnonymous(cancellationToken);
+                SetProfileData(AuthManager.UserSession);
+
+                SDKLogger.Log(TAG, $"Session started as anonymous and saved in {filePath}");
+                return;
             }
+
             var bytes = File.ReadAllBytes(filePath);
             var json = Encoding.UTF8.GetString(bytes);
             var userSession = JsonConvert.DeserializeObject<UserSession>(json);
@@ -57,7 +59,6 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             SetProfileData(userSession);
 
             SDKLogger.Log(TAG, $"Loaded session from {filePath}");
-            return true;
         }
 
         public void SaveSession(UserSession userSession)
@@ -72,6 +73,10 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
 
         private void SetProfileData(UserSession userSession)
         {
+            if (string.IsNullOrEmpty(userSession.Name))
+            {
+                userSession.Name = userSession.Id;
+            }
             profileUI.SetProfileData(
                 userSession.Name,
                 char.ToUpperInvariant(userSession.Name[0]).ToString()

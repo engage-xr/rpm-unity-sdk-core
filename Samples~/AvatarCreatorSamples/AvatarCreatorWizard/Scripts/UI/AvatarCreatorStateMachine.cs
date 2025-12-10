@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using ReadyPlayerMe.AvatarCreator;
+﻿using ReadyPlayerMe.AvatarCreator;
 using ReadyPlayerMe.Core;
 using ReadyPlayerMe.Core.Analytics;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,7 +26,7 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
 
         private AvatarAPIRequests avatarAPIRequests;
 
-        private void Start()
+        private async void Start()
         {
             AnalyticsRuntimeLogger.EventLogger.LogAvatarCreatorSample(CoreSettingsHandler.CoreSettings.AppId);
 
@@ -42,7 +43,10 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             avatarCreatorData.AvatarProperties.Gender = defaultGender;
             Initialize();
 
-            SetState(profileManager.LoadSession() ? StateType.AvatarSelection : startingState);
+            using var cancellationTokenSource = new CancellationTokenSource();
+            await TaskExtensions.HandleCancellation(profileManager.LoadSession(cancellationTokenSource.Token));
+
+            SetState(startingState == StateType.None ? StateType.AvatarSelection : startingState);
             ShowLoadPreviousAvatarPopup();
         }
 
