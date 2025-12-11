@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5860523741239834506}
   - component: {fileID: 6660012901589692875}
   m_Layer: 5
-  m_Name: FaceTypeAssetPanel
+  m_Name: FaceCategoryPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

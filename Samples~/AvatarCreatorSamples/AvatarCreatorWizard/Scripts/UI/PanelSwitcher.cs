@@ -9,6 +9,7 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
         public static Dictionary<AssetType, GameObject> CategoryPanelMap { get; private set; }
         public static GameObject OutfitCategoryPanel;
         public static GameObject FaceCategoryPanel;
+        public static GameObject BodyCategoryPanel;
 
         public static void AddPanel(AssetType category, GameObject widget)
         {
@@ -57,6 +58,9 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
                 case AssetType.Outfit:
                     OutfitCategoryPanel.SetActive(true);
                     SetActivePanel(category, true);
+                    break;
+                case AssetType.BodyShape:
+                    BodyCategoryPanel.SetActive(true);
                     break;
                 default:
                     SetActivePanel(category, true);

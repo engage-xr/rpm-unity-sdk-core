@@ -21,6 +21,7 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
         {
             buttonsById = new Dictionary<object, AssetButton>();
             selectedButtonsByCategory = new Dictionary<AssetType, AssetButton>();
+            selectedAssetIdByCategory = new Dictionary<AssetType, object>();
             clearButtonByCategory = new Dictionary<AssetType, AssetButton>();
         }
 

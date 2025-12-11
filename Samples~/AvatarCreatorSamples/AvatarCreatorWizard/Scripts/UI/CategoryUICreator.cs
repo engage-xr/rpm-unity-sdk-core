@@ -20,6 +20,9 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
         [SerializeField] private GameObject faceCategoryPanel;
         [SerializeField] private CategoryButton outfitCategoryButton;
         [SerializeField] private GameObject outfitCategoryPanel;
+        [SerializeField] private CategoryButton bodyCategoryButton;
+        [SerializeField] private GameObject bodyCategoryPanel;
+
         [SerializeField] private List<CategoryButton> categoryButtons;
         [SerializeField] private List<CategoryIcon> categoryPanels;
 
@@ -39,12 +42,14 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
         {
             faceCategoryButton.AddListener(SelectFaceShapeCategory);
             outfitCategoryButton.AddListener(SelectOutfitTopCategory);
+            bodyCategoryButton.AddListener(SelectBodyCategory);
         }
 
         private void OnDisable()
         {
             faceCategoryButton.RemoveListener();
             outfitCategoryButton.RemoveListener();
+            bodyCategoryButton.RemoveListener();
         }
 
         private void OnDestroy()
@@ -57,6 +62,7 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             categoryButtonsMap = new Dictionary<AssetType, CategoryButton>();
             PanelSwitcher.FaceCategoryPanel = faceCategoryPanel;
             PanelSwitcher.OutfitCategoryPanel = outfitCategoryPanel;
+            PanelSwitcher.BodyCategoryPanel = bodyCategoryPanel;
 
             foreach (var categoryButton in categoryButtons)
             {
@@ -100,6 +106,7 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             selectedCategoryButton.SetSelect(false);
             faceCategoryButton.SetSelect(category.IsFaceAsset());
             outfitCategoryButton.SetSelect(category.IsOutfitAsset());
+            bodyCategoryButton.SetSelect(category == AssetType.BodyShape);
             selectedCategoryButton = categoryButtonsMap[category];
             PanelSwitcher.Switch(category);
         }
@@ -147,6 +154,11 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             SelectCategoryGroup(AssetType.Top);
         }
 
+        private void SelectBodyCategory()
+        {
+            SelectCategoryGroup(AssetType.BodyShape);
+        }
+
         private void SelectCategoryGroup(AssetType category)
         {
             if (selectedCategoryButton != null)
@@ -155,9 +167,11 @@ namespace ReadyPlayerMe.Samples.AvatarCreatorWizard
             }
 
             var isOutfit = category.IsOutfitAsset();
+            var isFace = category.IsFaceAsset();
 
             outfitCategoryButton.SetSelect(isOutfit);
-            faceCategoryButton.SetSelect(!isOutfit);
+            faceCategoryButton.SetSelect(isFace);
+            bodyCategoryButton.SetSelect(category == AssetType.BodyShape);
             var button = categoryButtons.First(x => x.Category == category);
             button.SetSelect(true);
             PanelSwitcher.Switch(category);

@@ -190,6 +190,39 @@ namespace ReadyPlayerMe.AvatarCreator
         }
 
         /// <summary>
+        /// Update the gender of the avatar.
+        /// </summary>
+        /// <param name="gender"></param>
+        /// <returns>Avatar gameObject</returns>
+        public async Task<GameObject> UpdateGender(OutfitGender gender)
+        {
+            this.gender = gender;
+
+            var payload = new AvatarProperties
+            {
+                Gender = gender,
+            };
+
+            byte[] data;
+            try
+            {
+                data = await avatarAPIRequests.UpdateAvatar(avatarId, payload, avatarConfigParameters);
+            }
+            catch (Exception e)
+            {
+                HandleException(e);
+                return null;
+            }
+
+            if (ctxSource.IsCancellationRequested)
+            {
+                return null;
+            }
+
+            return await inCreatorAvatarLoader.Load(avatarId, gender, data);
+        }
+
+        /// <summary>
         /// Update an asset of the avatar.
         /// </summary>
         /// <param name="assetId"></param>
